@@ -41,12 +41,12 @@ jobs:
           7z x "D:/Program Files/Epic Games/UE.zip" "-oD:/Program Files/Epic Games/"
           del "D:/Program Files/Epic Games/UE.zip"
           Start-Process "${{ inputs.unreal-path }}/Engine/Extras/Redist/en-us/UEPrereqSetup_x64.exe" -Args "-q" -Wait
-      - name: Install Unreal Engine Linux Toolchain
-        if: inputs.unreal-linux-toolchain != ''
-        run: |
-          wget "${{ inputs.unreal-linux-toolchain }}" -o "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
-          Start-Process "${env:GITHUB_WORKSPACE}/linux-toolchain.exe" -Args "/S" -Wait
-          del "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
+      # - name: Install Unreal Engine Linux Toolchain
+      #   if: inputs.unreal-linux-toolchain != ''
+      #   run: |
+      #     wget "${{ inputs.unreal-linux-toolchain }}" -o "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
+      #     Start-Process "${env:GITHUB_WORKSPACE}/linux-toolchain.exe" -Args "/S" -Wait
+      #     del "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
       - name: Set environment variables
         run: |
           $env:CESIUM_UNREAL_VERSION=$(git describe)
