@@ -9,7 +9,14 @@ on:
       unreal-runner-label:
         required: true
         type: string
-      unreal-batch-files-path:
+      unreal-engine-zip:
+        required: true
+        type: string
+      unreal-linux-toolchain:
+        required: false
+        type: string
+        default: ""
+      unreal-path:
         required: true
         type: string
       upload-package-base-name:
