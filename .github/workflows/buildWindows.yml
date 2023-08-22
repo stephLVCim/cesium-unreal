@@ -44,7 +44,7 @@ jobs:
       - name: Install Unreal Engine Linux Toolchain
         if: inputs.unreal-linux-toolchain != ''
         run: |
-          wget "${{ inputs.unreal-linux-toolchain }}" "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
+          wget "${{ inputs.unreal-linux-toolchain }}" -o "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
           Start-Process "${env:GITHUB_WORKSPACE}/linux-toolchain.exe" -Args "/S" -Wait
           del "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
       - name: Set environment variables
