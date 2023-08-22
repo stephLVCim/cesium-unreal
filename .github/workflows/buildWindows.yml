@@ -34,12 +34,16 @@ jobs:
       - name: Install dependencies
         run: |
           choco install -y dotnetcore-sdk wget
-      - name: Install Unreal Engine
+      - name: Download Unreal Engine
         run: |
           mkdir -p "D:/Program Files/Epic Games"
           aws s3 cp "${{ inputs.unreal-engine-zip }}" "D:/Program Files/Epic Games/UE.zip"
+      - name: Unzip Unreal Engine
+        run: |
           7z x "D:/Program Files/Epic Games/UE.zip" "-oD:/Program Files/Epic Games/"
           del "D:/Program Files/Epic Games/UE.zip"
+      - name: Install Unreal Engine
+        run: |
           Start-Process "${{ inputs.unreal-path }}/Engine/Extras/Redist/en-us/UEPrereqSetup_x64.exe" -Args "-q" -Wait
       # - name: Install Unreal Engine Linux Toolchain
       #   if: inputs.unreal-linux-toolchain != ''
