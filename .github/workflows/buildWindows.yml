@@ -42,7 +42,7 @@ jobs:
           del "D:/Program Files/Epic Games/UE.zip"
           Start-Process "${{ inputs.unreal-path }}/Engine/Extras/Redist/en-us/UEPrereqSetup_x64.exe" -Args "-q" -Wait
       - name: Install Unreal Engine Linux Toolchain
-        if: ${{ inputs.unreal-linux-toolchain != "" }}
+        if: inputs.unreal-linux-toolchain != ''
         run: |
           wget "${{ inputs.unreal-linux-toolchain }}" "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
           Start-Process "${env:GITHUB_WORKSPACE}/linux-toolchain.exe" -Args "/S" -Wait
