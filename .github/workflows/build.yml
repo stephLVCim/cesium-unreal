@@ -15,15 +15,17 @@ jobs:
     uses: ./.github/workflows/buildWindows.yml
     with:
       unreal-engine-version: "5.0.0"
-      unreal-runner-label: "unreal-50"
-      unreal-batch-files-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Build/BatchFiles"
+      unreal-runner-label: "vs2019"
+      unreal-engine-zip: "s3://cesium-unreal-engine/5.0.0/UE5.zip"
+      unreal-linux-toolchain: "https://cdn.unrealengine.com/CrossToolchain_Linux/v19_clang-11.0.1-centos7.exe"
+      unreal-path: "D:/Program Files/Epic Games/UE_5.0"
       upload-package-base-name: "CesiumForUnreal-50-windows"
     secrets: inherit
   TestWindows50:
     needs: [Windows50]
     uses: ./.github/workflows/testWindows.yml
     with:
-      unreal-runner-label: "unreal-50"
+      unreal-runner-label: "vs2019"
       unreal-binaries-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Binaries/Win64"
       unreal-plugins-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Plugins"
       test-package-base-name: "CesiumForUnreal-50-windows"
@@ -237,7 +239,7 @@ jobs:
     uses: ./.github/workflows/testPackageOnWindows.yml
     with:
       unreal-engine-association: "5.0"
-      unreal-runner-label: "unreal-50"
+      unreal-runner-label: "vs2019"
       unreal-binaries-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Binaries/Win64"
       unreal-batch-files-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Build/BatchFiles"
       unreal-plugins-path: "C:/Program Files/Epic Games/UE_5.0/Engine/Plugins"
@@ -247,15 +249,17 @@ jobs:
     uses: ./.github/workflows/buildWindows.yml
     with:
       unreal-engine-version: "5.1.0"
-      unreal-runner-label: "unreal-51"
-      unreal-batch-files-path: "C:/Program Files/Epic Games/UE_5.1/Engine/Build/BatchFiles"
+      unreal-runner-label: "vs2019"
+      unreal-engine-zip: "s3://cesium-unreal-engine/5.1.1/Windows/UE_5.1.1.zip"
+      unreal-linux-toolchain: "https://cdn.unrealengine.com/CrossToolchain_Linux/v20_clang-13.0.1-centos7.exe"
+      unreal-path: "D:/Program Files/Epic Games/UE_5.1"
       upload-package-base-name: "CesiumForUnreal-51-windows"
     secrets: inherit
   TestWindows51:
     needs: [Windows51]
     uses: ./.github/workflows/testWindows.yml
     with:
-      unreal-runner-label: "unreal-51"
+      unreal-runner-label: "vs2019"
       unreal-binaries-path: "C:/Program Files/Epic Games/UE_5.1/Engine/Binaries/Win64"
       unreal-plugins-path: "C:/Program Files/Epic Games/UE_5.1/Engine/Plugins"
       test-package-base-name: "CesiumForUnreal-51-windows"
@@ -488,14 +492,16 @@ jobs:
     uses: ./.github/workflows/buildWindows.yml
     with:
       unreal-engine-version: "5.2.0"
-      unreal-runner-label: "unreal-52"
-      unreal-batch-files-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Build/BatchFiles"
+      unreal-runner-label: "vs2019"
+      unreal-engine-zip: "s3://cesium-unreal-engine/5.2.1/UE_5.2.1.zip"
+      unreal-linux-toolchain: "https://cdn.unrealengine.com/CrossToolchain_Linux/v21_clang-15.0.1-centos7.exe"
+      unreal-path: "D:/Program Files/Epic Games/UE_5.2"
       upload-package-base-name: "CesiumForUnreal-52-windows"
   TestWindows52:
     needs: [Windows52]
     uses: ./.github/workflows/testWindows.yml
     with:
-      unreal-runner-label: "unreal-52"
+      unreal-runner-label: "vs2019"
       unreal-binaries-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Binaries/Win64"
       unreal-plugins-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Plugins"
       test-package-base-name: "CesiumForUnreal-52-windows"
@@ -738,7 +744,7 @@ jobs:
     uses: ./.github/workflows/testPackageOnWindows.yml
     with:
       unreal-engine-association: "5.2"
-      unreal-runner-label: "unreal-52"
+      unreal-runner-label: "vs2019"
       unreal-binaries-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Binaries/Win64"
       unreal-batch-files-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Build/BatchFiles"
       unreal-plugins-path: "C:/Program Files/Epic Games/UE_5.2/Engine/Plugins"

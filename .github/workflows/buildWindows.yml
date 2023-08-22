@@ -24,15 +24,28 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0 # so that `git describe` works.
-      - name: Install dotnetcore-sdk
+      - name: Install dependencies
         run: |
-          choco install -y dotnetcore-sdk
+          choco install -y dotnetcore-sdk wget
+      - name: Install Unreal Engine
+        run: |
+          mkdir -p "D:/Program Files/Epic Games"
+          aws s3 cp "${{ inputs.unreal-engine-zip }}" "D:/Program Files/Epic Games/UE.zip"
+          7z x "D:/Program Files/Epic Games/UE.zip" "-oD:/Program Files/Epic Games/"
+          del "D:/Program Files/Epic Games/UE.zip"
+          Start-Process "${{ inputs.unreal-path }}/Engine/Extras/Redist/en-us/UEPrereqSetup_x64.exe" -Args "-q" -Wait
+      - name: Install Unreal Engine Linux Toolchain
+        if: ${{ inputs.unreal-linux-toolchain != "" }}
+        run: |
+          wget "${{ inputs.unreal-linux-toolchain }}" "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
+          Start-Process "${env:GITHUB_WORKSPACE}/linux-toolchain.exe" -Args "/S" -Wait
+          del "${env:GITHUB_WORKSPACE}/linux-toolchain.exe"
       - name: Set environment variables
         run: |
           $env:CESIUM_UNREAL_VERSION=$(git describe)
           $env:BUILD_CESIUM_UNREAL_PACKAGE_NAME="${{ inputs.upload-package-base-name }}-${env:CESIUM_UNREAL_VERSION}"
           $env:BUILD_CESIUM_UNREAL_PACKAGE_PATH="$env:GITHUB_WORKSPACE/packages/CesiumForUnreal"
-          $env:UNREAL_BATCH_FILES_PATH="${{ inputs.unreal-batch-files-path }}"
+          $env:UNREAL_BATCH_FILES_PATH="${{ inputs.unreal-path }}/Engine/Build/BatchFiles"
 
           # Make these available to subsequent steps
           echo "BUILD_CESIUM_UNREAL_PACKAGE_NAME=${env:BUILD_CESIUM_UNREAL_PACKAGE_NAME}" >> $env:GITHUB_ENV
@@ -55,7 +68,7 @@ jobs:
         run: |
           ((Get-Content -path CesiumForUnreal.uplugin -Raw) -replace '"EngineVersion": "5.0.0"','"EngineVersion": "${{ inputs.unreal-engine-version }}"') | Set-Content -Path CesiumForUnreal.uplugin
       - name: Build CesiumForUnreal plugin
-        timeout-minutes: 120      
+        timeout-minutes: 120
         run: |
           cd "$env:UNREAL_BATCH_FILES_PATH"
           ./RunUAT.bat BuildPlugin -Plugin="$env:GITHUB_WORKSPACE/CesiumForUnreal.uplugin" -Package="$env:BUILD_CESIUM_UNREAL_PACKAGE_PATH" -CreateSubFolder -TargetPlatforms=Win64
