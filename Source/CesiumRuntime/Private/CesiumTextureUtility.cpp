@@ -26,10 +26,13 @@
 #include <memory>
 #include <stb_image_resize.h>
 #include <variant>
+#include <set>
 
 using namespace CesiumGltf;
 
 namespace {
+
+
 // Legacy texture creation code path - creates textures using Unreal's
 // FTexture2DMipMap and Texture2D::UpdateResource(). While this is slightly
 // less efficient than other approaches we've found, the other approaches
@@ -466,6 +469,7 @@ FTexture2DRHIRef CreateRHITexture2D_Async(
     bool sRGB) {
   check(GRHISupportsAsyncTextureCreation);
 
+
   ETextureCreateFlags textureFlags = TexCreate_ShaderResource;
   if (sRGB) {
     textureFlags |= TexCreate_SRGB;
@@ -508,6 +512,77 @@ FTexture2DRHIRef CreateRHITexture2D_Async(
 } // namespace
 
 namespace CesiumTextureUtility {
+
+
+    // cache management
+struct CachedTextureStruct {
+  UTexture2D* _texture;
+  uint32_t _refCount;
+};
+
+std::map<std::string, CachedTextureStruct> cachedTexture;
+std::map<UTexture2D*, std::string> textureInCache;
+
+void addTextureToCache(const std::string& uri, UTexture2D* tex) {
+
+  if (uri.find(".png") == std::string::npos) // cache only png for now
+    return;
+
+  if (uri.find("D501") == std::string::npos) // cache only models texture
+    return;
+
+  // should add a lock
+  auto found = cachedTexture.find(uri);
+  if (found != cachedTexture.end()) {
+
+    return;
+  }
+
+  CachedTextureStruct toAdd;
+  toAdd._refCount = 1;
+  toAdd._texture = tex;
+
+  cachedTexture[uri] = toAdd;
+  textureInCache[tex] = uri;
+}
+
+UTexture2D* getTextureInCache(const std::string& uri) {
+
+  auto found = cachedTexture.find(uri);
+  if (found != cachedTexture.end()) {
+
+    found->second._refCount++;
+
+    return found->second._texture;
+  }
+
+  return nullptr;
+}
+
+// return true if texture can be destroyed
+bool removeFromCache(UTexture2D* tex) {
+
+  auto found = textureInCache.find(tex);
+  if (found != textureInCache.end()) {
+
+    cachedTexture[found->second]._refCount--;
+
+    if (cachedTexture[found->second]._refCount == 0) {
+
+      auto foundInCache = cachedTexture.find(found->second);
+      cachedTexture.erase(foundInCache);
+      textureInCache.erase(found);
+
+      return true;
+    }
+    return false;
+  }
+
+  // texture not in cache can be destroyed
+  return true;
+}
+
+
 
 GltfImagePtr
 GltfImageIndex::resolveImage(const CesiumGltf::Model& model) const {
@@ -909,13 +984,40 @@ UTexture2D* loadTextureGameThreadPart(
     return nullptr;
   }
 
+  bool addToCache = false;
+
   GltfImageIndex* pImageIndex =
       std::get_if<GltfImageIndex>(&pHalfLoadedTexture->textureSource);
   if (pImageIndex) {
     pHalfLoadedTexture->textureSource = pImageIndex->resolveImage(model);
+
+    if (model.images[pImageIndex->index].uri) {
+
+      auto tex = getTextureInCache(*model.images[pImageIndex->index].uri);
+
+      if (tex) {
+        return tex;
+      }
+      addToCache = true;
+    }
+ 
+  } else {
+
+    /*AsyncCreatedTexture* asTex =
+        std::get_if<AsyncCreatedTexture>(&pHalfLoadedTexture->textureSource);
+    if (asTex) {
+      asTex->rhiTextureRef->
+    }*/
+
   }
 
-  return loadTextureGameThreadPart(pHalfLoadedTexture);
+  auto tex = loadTextureGameThreadPart(pHalfLoadedTexture);
+
+  if (addToCache) {
+    addTextureToCache(*model.images[pImageIndex->index].uri, tex);
+  }
+
+  return tex;
 }
 
 void destroyHalfLoadedTexture(LoadedTextureResult& halfLoaded) {
@@ -935,6 +1037,10 @@ void destroyHalfLoadedTexture(LoadedTextureResult& halfLoaded) {
 
 void destroyTexture(UTexture* pTexture) {
   check(pTexture != nullptr);
-  CesiumLifetime::destroy(pTexture);
+
+  if (removeFromCache(dynamic_cast<UTexture2D*>(pTexture))) {
+    CesiumLifetime::destroy(pTexture);
+  }
+  
 }
 } // namespace CesiumTextureUtility

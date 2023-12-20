@@ -1878,12 +1878,17 @@ bool applyTexture(
     UMaterialInstanceDynamic* pMaterial,
     const FMaterialParameterInfo& info,
     CesiumTextureUtility::LoadedTextureResult* pLoadedTexture) {
-  UTexture2D* pTexture =
-      CesiumTextureUtility::loadTextureGameThreadPart(model, pLoadedTexture);
-  if (!pTexture) {
-    return false;
-  }
 
+    UTexture2D* pTexture =
+          CesiumTextureUtility::loadTextureGameThreadPart(
+          model,
+          pLoadedTexture);
+    
+    if (!pTexture) {
+      return false;
+    }
+
+ 
   pMaterial->SetTextureParameterValueByInfo(info, pTexture);
 
   return true;
@@ -1933,10 +1938,22 @@ static void SetGltfParameterValues(
   pMaterial->SetScalarParameterValueByInfo(
       FMaterialParameterInfo("roughnessFactor", association, index),
       static_cast<float>(loadResult.isUnlit ? 1.0f : pbr.roughnessFactor));
-  pMaterial->SetScalarParameterValueByInfo(
-      FMaterialParameterInfo("opacityMask", association, index),
-      1.0f);
 
+  if (!!loadResult.pMaterial && loadResult.pMaterial->alphaMode ==
+                                    CesiumGltf::Material::AlphaMode::MASK) {
+
+    pMaterial->BlendMode = EBlendMode::BLEND_Masked;
+    pMaterial->OpacityMaskClipValue = loadResult.pMaterial->alphaCutoff;
+
+    pMaterial->SetScalarParameterValue("AlphaMask", 1.0f);
+
+
+  } else {
+
+    pMaterial->SetScalarParameterValueByInfo(
+        FMaterialParameterInfo("opacityMask", association, index),
+        1.0f);
+  }
   applyTexture(
       model,
       pMaterial,
@@ -2504,6 +2521,7 @@ static void loadPrimitiveGameThreadPart(
   const Cesium3DTilesSelection::BoundingVolume& boundingVolume =
       tile.getContentBoundingVolume().value_or(tile.getBoundingVolume());
 
+  
   FName meshName = createSafeName(loadResult.name, "");
   UCesiumGltfPrimitiveComponent* pMesh;
   if (loadResult.pMeshPrimitive->mode == MeshPrimitive::Mode::POINTS) {
@@ -2569,6 +2587,11 @@ static void loadPrimitiveGameThreadPart(
                                      CesiumGltf::Material::AlphaMode::BLEND;
   };
 
+  const auto is_in_mask_mode = [](auto& result) {
+    return !!result.pMaterial && result.pMaterial->alphaMode ==
+                                     CesiumGltf::Material::AlphaMode::MASK;
+  };
+
 #if PLATFORM_MAC
   // TODO: figure out why water material crashes mac
   UMaterialInterface* pBaseMaterial =
@@ -2580,6 +2603,13 @@ static void loadPrimitiveGameThreadPart(
   UMaterialInterface* pBaseMaterial;
   if (loadResult.onlyWater || !loadResult.onlyLand) {
     pBaseMaterial = pGltf->BaseMaterialWithWater;
+  /*} else if (is_in_mask_mode(loadResult)) {
+    pBaseMaterial = 
+      (pbr.baseColorFactor.size() > 3 &&
+         pbr.baseColorFactor[3] < 0.996) // 1. - 1. / 256.
+            ? pGltf->BaseMaterialWithTranslucency
+            : pGltf->BaseMaterial;
+            */
   } else {
     pBaseMaterial =
         (is_in_blend_mode(loadResult) && pbr.baseColorFactor.size() > 3 &&
@@ -2863,8 +2893,7 @@ UCesiumGltfComponent::UCesiumGltfComponent() : USceneComponent() {
   // Structure to hold one-time initialization
   struct FConstructorStatics {
     ConstructorHelpers::FObjectFinder<UMaterialInstance> BaseMaterial;
-    ConstructorHelpers::FObjectFinder<UMaterialInstance>
-        BaseMaterialWithTranslucency;
+    ConstructorHelpers::FObjectFinder<UMaterialInstance> BaseMaterialWithTranslucency;
     ConstructorHelpers::FObjectFinder<UMaterialInstance> BaseMaterialWithWater;
     ConstructorHelpers::FObjectFinder<UTexture2D> Transparent1x1;
     FConstructorStatics()
@@ -2881,8 +2910,7 @@ UCesiumGltfComponent::UCesiumGltfComponent() : USceneComponent() {
   static FConstructorStatics ConstructorStatics;
 
   this->BaseMaterial = ConstructorStatics.BaseMaterial.Object;
-  this->BaseMaterialWithTranslucency =
-      ConstructorStatics.BaseMaterialWithTranslucency.Object;
+  this->BaseMaterialWithTranslucency = ConstructorStatics.BaseMaterialWithTranslucency.Object;
   this->BaseMaterialWithWater = ConstructorStatics.BaseMaterialWithWater.Object;
   this->Transparent1x1 = ConstructorStatics.Transparent1x1.Object;
 

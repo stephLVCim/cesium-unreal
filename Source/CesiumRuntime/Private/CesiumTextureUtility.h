@@ -19,6 +19,12 @@ struct Texture;
 } // namespace CesiumGltf
 
 namespace CesiumTextureUtility {
+
+  void addTextureToCache(const std::string& uri, UTexture2D* tex);
+  UTexture2D* getTextureInCache(const std::string& uri);
+  bool removeFromCache(UTexture2D* tex);
+
+
 /**
  * @brief A texture that has already been asynchronously created.
  */
